@@ -1,296 +1,205 @@
-import React, { useEffect, useState } from 'react'
-import { View, Text, StyleSheet, TouchableOpacity, SafeAreaView, ScrollView, Modal } from 'react-native'
-import Icon from 'react-native-vector-icons/Ionicons'
+import React, { useEffect, useState, useContext, useRef, useCallback } from 'react'
+import { View, SafeAreaView, FlatList, ActivityIndicator, Text, TouchableOpacity } from 'react-native'
+import Icon from 'react-native-vector-icons/FontAwesome'
+import Camera from 'react-native-vector-icons/MaterialIcons'
 
-import AsyncStorage from '@react-native-community/async-storage'
+import { UserContext } from '../../contexts/userContext'
 
-import { StatusBarHeight } from '../../utils/StatusBarTam'
+import colors from '../../utils/colors'
 
-// Image test
-import img from '../../assets/hamburger.jpg'
-import avatar from '../../assets/perfil.png'
-
-// Import of tag component
-import Tag from '../../components/Tag'
-
-// Import Input
-import Input from '../../components/Input'
-
-// Api import
+import style from './styles'
 import api from '../../api'
 
-// Item component, this is a post item, receive the item data and a function to add comment
-function Item({ item, showMore }) {
+import Item from './components/GalleryItem'
+import ShowMoreModal from './components/ShowMoreCommentsModal'
+
+function EndPostsMessage({ active }) {
+    if(!active) return null;
     return (
-        <View>
-            <Container >
-                <Img source={img} style={{resizeMode: 'cover'}} />
-                <Avatar source={avatar} />
-                <Container.title>{item.user.name}</Container.title>
-                <Tag color="#eb5757" title="Topper demais" />
-                <Container.comment>{item.description}</Container.comment>
-            </Container>
-            <Text style={style.commentPost} onPress={showMore} >Exibir mais</Text>
+        <View style={{ width: '100%', alignItems: 'center' }} >
+            <Text style={style.endPostsMessage} >Sem mais postagens</Text>
         </View>
     )
 }
 
-// Modal component of newPost
-function NewPostModal ({ visible, close, value, onChangeText, createPost }){
+function Header({ headerPress, iconPress, type }) {
     return (
-        <Modal
-            animationType="fade"
-            visible={visible}
-            transparent
-            onRequestClose={close}
-        >
-            <View style={style.modalContainer} >
-                <Input 
-                    placeholder="Descrição" 
-                    value={value} 
-                    onChangeText={e => onChangeText(e)} 
-                    multiline={true}
-                    size={100}
-                />
+            <TouchableOpacity style={style.headerButton} onPress={headerPress} >
+                    <Text style={style.headerText} >Feed</Text>
 
-                <TouchableOpacity style={style.createPost} onPress={createPost} >
-                    <Text>Criar Post</Text>
-                </TouchableOpacity>
-            </View>
-        </Modal>
-    )
-}
-
-// Modal to show more comments of post to user
-// ************************************* Implementar id abaixo ****************************** //
-function ShowMoreModal ({ visible, close, comments }){
-    return (
-        <Modal
-            animationType="fade"
-            visible={visible}
-            transparent
-            onRequestClose={close}
-        >
-            <ScrollView style={{ width: "100%", backgroundColor: "#f2f2f2" }} >
-                <View style={{ width: "100%", alignItems: "center", justifyContent: 'center' }} >
-                    {comments.map(item => (
-                        <View key={item.id} style={{ marginBottom: 20 }} >
-                            {/* Mudar id para ficar unico */}
-                            <Text key={item.id} >Usuário: {item.user.name}</Text>
-                            <Text key={item.id} >Comentário: {item.comment}</Text>
-                        </View>
-                    ))}
-                </View>
-            </ScrollView>
-        </Modal>
+                    <TouchableOpacity style={{
+                        width:30,height:30,alignItems: 'center',justifyContent: 'center',position:'absolute',
+                        top: '20%',right: 10
+                    }} onPress={iconPress} >
+                        {type === 0 ? 
+                            <Camera name="camera" size={20} color='#f2f2f2' />
+                            :
+                            <Icon name="newspaper-o" size={20} color="#f2f2f2" />
+                        }
+                    </TouchableOpacity>
+            </TouchableOpacity>
     )
 }
 
 export default () => {
 
-    // Array of posts to render
-    const [posts, setPosts] = useState([]);
+    //=================================== States ===================================//
+    const [posts, setPosts] = useState([])
+    const [news, setNews] = useState([])
 
-    // Sets if the new post modal is visible or not
-    const [newPostModalVisible, setNewPostModalVisible] = useState(false);
+    // type === 0 for posts, type === 1 for news
+    const [type, setType] = useState(0)
 
-    // Sets if the show more modal is visible
-    const [showMoreModal, setShowMoreModal] = useState(false);
+    const [page, setPage] = useState(1)
+    const [showMoreModal, setShowMoreModal] = useState(false)
+    const [refresh, setRefresh] = useState(false)
+    const [postId, setPostId] = useState("")
+    const [loading, setLoading] = useState(false)
+    const [end, setEnd] = useState(false)
 
-    // Sets post id to modal 
-    const [comments, setComments] = useState([])
+    const { state, addRefreshFeed } = useContext(UserContext)
 
-    // New post modal info
-    const [newPostModalInfo, setNewPostModalInfo] = useState("");
+    const flatRef = useRef()
 
-    // When the component is opened, call the funciotn to get Posts and save on array
-    useEffect(() => {
-        getPosts();
+    //=============================== Refresh page ====================================//
+
+    const onRefresh = useCallback(() => {
+        setRefresh(true)
+        setEnd(false)
+        getPosts(true).then(() => setRefresh(false))
     }, [])
 
-    // This function call the api and set in the array of posts
-    // if returns an error show to the user through alert *** Change this later
-    async function getPosts (){
-        try {
-            const res = await api.get("/post/list");
+      //============================= Effect ==========================================//
 
-            setPosts(res.data)
+    useEffect(() => {
+        let isMounted = true
+        setLoading(true)
+        getPosts(isMounted)
+        addRefreshFeed("refresh", onRefresh)
+        return () => { isMounted = false }
+    }, [])
+
+    useEffect(() => {
+        let isMounted = true;
+        if(page !== 1 && !end) getMorePosts(isMounted);
+        return () => { isMounted = false }
+    }, [page])
+
+    //============================== Functions ====================================//
+
+    const getPosts = useCallback( async(isMounted) => {
+        try {
+            const post = await api.post("/post/nearUser", {
+                latitude: state.latitude,
+                longitude: state.longitude,
+                dist: 20000,
+                page: 1,
+            })
+
+            const res = await api.post('/news/nearUser', {
+                latitude: state.latitude,
+                longitude: state.longitude,
+                dist: 30000
+            })
+            // console.log(res.data)
+            if(isMounted) {
+                setPage(1)
+                setPosts(post.data.docs)
+                setNews(res.data)
+                setLoading(false)
+            }
         } catch (error) {
             if(error.response) alert(error.response.data.error)
             else alert("Erro ao coletar dados dos posts")
         }
+    }, [])
+
+    function showMore(data) {
+        setPostId(data._id);
+        setShowMoreModal(true)
     }
 
-    // This function is called when the user clicks on comment post
-    async function showMore(data) {
-        try{
-            const res = await api.get(`/post/listComments/${data._id}`)
-
-            setComments(res.data);
-
-            setShowMoreModal(true)
-        }catch(error) {
-            if(error.response) alert(error.response.data.error)
-            else alert("Erro ao exibir mais")
-        }
-    }
-
-    // This function is called to make the user create a new post
-    function handleNewPost (){
-        setNewPostModalVisible(true)
-    }
-
-    // This function is called to close modal
     function closeModal (){
-        setNewPostModalVisible(false);
         setShowMoreModal(false)
     }
 
-    // This function is called when the create post button on newPostModal is pressed
-    async function createPost (){
+    const headerPress = () => {
+        flatRef.current?.scrollToOffset({
+            y : 0,
+            animated : true
+        });
+    }
+
+    async function onEndReached() {
+        if(!end) setLoading(true)
+        setPage(previous => previous + 1)
+    }
+
+    async function getMorePosts(isMounted) {
         try {
-            const token = await AsyncStorage.getItem("token");
-
-            if(!token) alert("Usuário não autorizado")
-
-            await api.post("/post/create", { description: newPostModalInfo }, {
-                headers: { Authorization: `Bearer ${token}` }
+            const res = await api.post("/post/nearUser", {
+                latitude: state.latitude,
+                longitude: state.longitude,
+                dist: 20000,
+                page,
             })
 
-            alert("Post Criado com sucesso!")
+            if (res.data.docs.length === 0) {
+                setLoading(false)
+                setEnd(true)
+            }
+            else if(isMounted) {
+                setPosts(previousPosts => [...previousPosts, ...res.data.docs])
+                setLoading(false)
+            }
 
-            closeModal();
-            
         } catch (error) {
-            if(error.response) alert(error.response.data.error)
-            else alert("Falha na criação do post")
+            alert("Erro ao buscar mais posts")
+            console.log(error)
         }
     }
 
+    function changeType() {
+        if(type === 0) setType(1)
+        else setType(0)
+    }
 
-    // Here starts the jsx of the component :)
+
+    //========================== Here starts the jsx of the component :) ==============//
     return (
         <SafeAreaView style={style.container} >
-            <NewPostModal close={closeModal} visible={newPostModalVisible} />
 
-            <ScrollView style={{ width: '100%' }} >
-
-                    <View style={{ alignItems: 'center', justifyContent: 'center' }} >
-                        <TouchableOpacity style={style.addPostButton} onPress={handleNewPost} >
-                            <Icon name='md-add' size={40} color="#767676" />
-                        </TouchableOpacity>
-                        <Text style={style.newPostText} >Postar Conteúdo</Text>
-                    </View>
-
-                    <View style={style.listContainer} >
-                        {posts.map((item) => (
-                            <Item key={item._id} item={item} showMore={() => showMore(item)} />
-                        ))}
-                        <View style={{ width: '100%', marginBottom: 40}} />
-                    </View>
-
-            </ScrollView>
-
-            <NewPostModal
-                close={closeModal} 
-                visible={newPostModalVisible}
-                value={newPostModalInfo}
-                onChangeText={e => setNewPostModalInfo(e)}
-                createPost={createPost}
+            <Header headerPress={headerPress} iconPress={changeType} type={type} />
+            
+            <FlatList
+                data={type === 0 ? posts : news}
+                keyExtractor={(item, index) => index.toString()}
+                style={{width: '100%', backgroundColor: colors.background}}     
+                ref={flatRef}
+                refreshing={refresh}
+                onRefresh={onRefresh}
+                onEndReached={onEndReached}
+                onEndReachedThreshold={0.1}
+                renderItem={({item}) => 
+                    <Item 
+                        item={item}
+                        showMore={() => showMore(item)}
+                        id={item._id}
+                        type={type}
+                    />
+                }
+                ListFooterComponent={<EndPostsMessage active={end} />}
             />
 
-            <ShowMoreModal 
+            {loading && <ActivityIndicator size='large' color="#f2f2f2" /> }
+
+            {showMoreModal && <ShowMoreModal 
                 close={closeModal}
                 visible={showMoreModal}
-                comments={comments}
-            />
+                id={postId}
+            />}
 
         </SafeAreaView>
     )
 }
 
-// --------------------------------------- Create StyleSheet -----------------------------------//
-
-const style = StyleSheet.create({
-    container: {
-        flex: 1,
-        alignItems: 'center',
-        justifyContent: 'flex-start',
-        backgroundColor: "#262626",
-    },
-    newPostText: {
-        color: '#f2f2f2',
-        fontSize: 18,
-        marginVertical: 10
-    },
-    addPostButton: {
-        width: 60,
-        height: 60,
-        borderRadius: 60,
-        backgroundColor: '#f2f2f2',
-        alignItems: 'center',
-        justifyContent: 'center',
-        marginTop: StatusBarHeight + 10,
-    },
-    listContainer: {
-        backgroundColor: '#f2f2f2',
-        width: '100%',
-        borderTopLeftRadius: 40,
-        borderTopRightRadius: 40,
-    },
-    commentPost: {
-        fontSize: 16,
-        textAlign: "center",
-        marginTop: 20
-    },
-    // ============= Modal Style =============== //
-    modalContainer: {
-        flex: 1,
-        backgroundColor: "#262626",
-        alignItems: 'center',
-        justifyContent: 'center',
-        padding: 20,
-    },
-    createPost: {
-        width: "100%",
-        backgroundColor: "rgba(255, 0, 0, 0.6)",
-        alignItems: 'center'
-    }
-})
-
-//--------------------------- Item styles ------------------//
-
-import styled from 'styled-components'
-
-const Container = styled.View`
-    width: 100%;
-    background-color: #d9d9d9;
-    margin-top: 60px;
-    align-items: center;
-    justify-content: flex-start;
-`;
-
-Container.title = styled.Text`
-    font-size: 18px;
-    color: #000;
-`;
-
-Container.comment = styled.Text`
-    font-size: 16px;
-    font-weight: bold;
-    color: #8c8c8c;
-    text-align: center;
-    margin-bottom: 20px;
-`;
-
-const Img = styled.Image`
-    width: 100%;
-    height: 400px;
-`;
-
-const Avatar = styled.Image`
-    width: 60px;
-    height: 60px;
-    border-radius: 60px;
-    margin-top: 10px;
-`;

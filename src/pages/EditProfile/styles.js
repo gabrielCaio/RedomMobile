@@ -1,60 +1,84 @@
 import { StyleSheet, Dimensions } from 'react-native'
+import color from '../../utils/colors'
+import Constants from 'expo-constants'
+import colors from '../../utils/colors';
 
 const style = StyleSheet.create({
     container: {
-        width: Dimensions.get('window').width,
-        height: Dimensions.get('window').height
-    },
-    texto: {
-        color: '#000',
-        fontSize: 25,
-        marginTop: 20
-    },
-    gradient: {
         flex: 1,
+        backgroundColor: color.background,
+    },
+    bannerArea: {
+        width: "100%",
+        height: "50%"
+    },
+    banner: {
+        width: '100%',
+        height: "100%",
         alignItems: 'center',
         justifyContent: 'center',
-        paddingHorizontal: 20
-    },
+    },  
     imageArea: {
-        width: 200,
+        marginTop: 30,
+        width: '100%',
         alignItems: "center",
         justifyContent: 'center',
-        marginTop: 30
     },
     avatar: {
         width: 150,
         height: 150,
-        borderRadius: 200,
+        marginTop: '20%',
+        justifyContent: 'flex-end',
+        alignItems: 'flex-end'
     },
-    editButton: {
-        borderRadius: 50,
+    headerText: {
+        color: '#f2f2f2',
+        fontFamily: 'Domine_400Regular',
+        marginTop: 20,
     },
-    editView: {
-        width: 50,
-        height: 50,
-        backgroundColor: '#eb5757',
-        borderRadius: 50,
-        alignItems: "center",
-        justifyContent: 'center',
-
-        position: 'relative',
-        bottom: 45,
-        left: 60
+    editBannerIcon: {
+        position: 'absolute',
+        top: 20,
+        right: 10
     },
-    botaoSalvar: {
-        width: "100%",
-        height: 50,
-        backgroundColor: '#EB5757',
-        alignItems: 'center',
-        justifyContent: 'center',
-        borderRadius: 10,
+    editAvatarIcon: {
+        marginRight: 10,
+        marginBottom: 10
+    },
+    inputArea: {
+        width: '100%',
+        padding: 10,
         marginTop: 20
     },
-    textBotaoSalvar: {
-        color: "#f2f2f2",
-        fontSize: 20
-    }
+    confirmButton: {
+        width: '40%',
+        height: 40,
+        alignItems: 'center',
+        justifyContent: 'center',
+        backgroundColor: colors.fontLighter,
+        borderRadius: 5
+    },
+    cancelButton: {
+        width: '100%',
+        height: 40,
+        alignItems: 'center',
+        justifyContent: 'center',
+        borderRadius: 5,
+        marginTop: 10,
+        flexDirection: 'row'
+    },
+    buttonText: {
+        fontFamily: 'Domine_400Regular',
+        color: '#f2f2f2',
+        fontSize: 14
+    },
+    buttonArea: {
+        width: '100%', 
+        padding: 10, 
+        alignItems: 'center',
+        position: 'absolute',
+        bottom: 20
+    },
 })
 
 export default style;

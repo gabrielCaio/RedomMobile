@@ -1,16 +1,19 @@
 import axios from 'axios'
 import AsyncStorage from '@react-native-community/async-storage'
 
-const local = "http://192.168.0.111:3333"
+const production = "https://app-lugares.herokuapp.com"
 
 const api = axios.create({
-    baseURL: local
+    baseURL: production,
+    timeout: 10000
 })
 
 
 api.interceptors.request.use(async (config) => {
     const token = await AsyncStorage.getItem("token");
-    if (token) config.headers.token = token;
+    if (token) config.headers = {
+        'Authorization': `Bearer ${token}`
+    };
     return config;
 });
 

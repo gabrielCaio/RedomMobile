@@ -1,5 +1,7 @@
 export const initialState = {
-    avatar: '',
+    id: "",
+    avatar: null,
+    banner: null,
     favorites: [],
     nome: "",
     email: "",
@@ -8,6 +10,10 @@ export const initialState = {
     latitude: "",
     longitude: "",
     role: "",
+    numPosts: 0,
+    numReviews: 0,
+    numPlaces: 0,
+    title: "",
 };
 
 export const UserReducer = (state, action) => {
@@ -17,11 +23,16 @@ export const UserReducer = (state, action) => {
         case "setDataUser":
             return {
                 ...state,
+                id: action.data.id,
                 nome: action.data.nome,
                 email: action.data.email,
                 username: action.data.username,
                 role: action.data.role,
-                token: action.data.token
+                avatar: action.data.avatar,
+                banner: action.data.banner,
+                numPosts: action.data.numPosts,
+                numReviews: action.data.numReviews,
+                numPlaces: action.data.numPlaces,
             }
             case "setUserLocation":
                 return {
@@ -31,7 +42,29 @@ export const UserReducer = (state, action) => {
                 }
             case "clear":
                 return {
-                    state: initialState
+                    ...initialState
+                }
+            case "update":
+                return {
+                    ...state,
+                    numPosts: action.data.numPosts,
+                    numReviews: action.data.numReviews,
+                    numPlaces: action.data.numPlaces
+                }
+            case "setAvatar":
+                return {
+                    ...state,
+                    avatar: action.payload.avatar
+                }
+            case "setBanner":
+                return {
+                    ...state,
+                    banner: action.payload.banner
+                }
+            case "setNome":
+                return {
+                    ...state,
+                    nome: action.payload.nome
                 }
         default:
             return state;
