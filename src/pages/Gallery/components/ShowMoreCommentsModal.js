@@ -1,10 +1,13 @@
-import React, { useState, useEffect, useCallback } from 'react'
-import { View, Text, StyleSheet, Modal, ScrollView, TouchableOpacity, ActivityIndicator } from 'react-native'
+import React, { useState, useEffect, useCallback, useContext } from 'react'
+import { View, Text, StyleSheet, Modal, FlatList, TouchableOpacity, ActivityIndicator } from 'react-native'
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons'
+
+import { UserContext } from '../../../contexts/userContext'
 
 import Input from '../../../components/Input'
 import api from '../../../api'
 import Icon2 from 'react-native-vector-icons/MaterialIcons'
+import colors from '../../../utils/colors'
 
 
 // Modal to show more comments of post to user
@@ -15,11 +18,12 @@ export default ({ visible, close, id }) => {
     const [refresh, setRefresh] = useState(false)
     const [loading, setLoading] = useState(false)
 
+    const { state } = useContext(UserContext)
+
     useEffect(() => {
         let isMounted = true
         if(isMounted) {
-            getComments() 
-            setLoading(false)
+            getComments(isMounted) 
         }
         return () => { isMounted = false }
     }, [refresh])
@@ -31,40 +35,37 @@ export default ({ visible, close, id }) => {
         return () => { isMounted = false }
     }, [])
 
-    async function getComments() {
+    async function getComments(isMounted) {
         try {
-            const res = await api.get(`/comment/listCommentsPost/${id}`);
-
-            setList(res.data)
+            const res = await api.get(`/comment/listCommentsPost/${id}`)
+            if(isMounted) {
+                setLoading(false)
+                setList(res.data)
+            }
         } catch (error) {
-            if(error.response) alert(error.response.data.error)
-            else alert("Erro ao buscar comentários")
+            alert("Erro ao buscar comentários")
         }
     }
 
     async function confirm() {
         try {
-            const res = await api.post(`/comment/create/${id}`, {
-                comment
-            })
-            setComment("");
-            setRefresh(() => !refresh);
+            const res = await api.post(`/comment/create/${id}`, { comment })
+            setComment("")
+            setRefresh(() => !refresh)
         } catch (error) {
-            if(error.response) alert(error.response.data.error);
-            else alert("Erro ao comentar");
+            alert("Erro ao comentar")
         }
     }
 
-    async function deleteComment (data) {
+    async function deleteComment(data) {
         try {
             setLoading(true)
-            const res = await api.delete(`/comment/delete/${data._id}`);
+            const res = await api.delete(`/comment/delete/${data}`)
 
-            setRefresh(() => !refresh);
+            setRefresh(() => !refresh)
             setLoading(false)
         } catch (error) {
-            if(error.response) alert(error.response.data.error)
-            else alert('Erro ao deletar comentário')
+            alert('Erro ao deletar comentário')
         }
     }
 
@@ -74,7 +75,7 @@ export default ({ visible, close, id }) => {
     }, [])
 
     function handleIconBack() {
-        close();
+        close()
     }
 
     return (
@@ -84,56 +85,66 @@ export default ({ visible, close, id }) => {
             transparent
             onRequestClose={close}
         >
-            <ScrollView style={{ width: "100%", backgroundColor: "#262626", padding: 20 }} >
-
-            {loading && (
-                <View style={{width:'100%',height:'100%',alignItems:'center',justifyContent:'center'}}>
-                    <ActivityIndicator size="large" color="#02F564af" />
-                </View>
-            )}
-                <View style={{width:'100%',alignItems:'center',marginBottom:20}} >
+            <View style={style.container} >
+                
+                <View style={{width:'100%',alignItems:'center',marginVertical:20}} >
                     <Text style={style.headerText} >Comentários</Text>
                 </View>
 
-
-                <View style={{ width: "100%", alignItems: "center", justifyContent: 'center' }} >
-                    {list.map(item => (
+                <FlatList 
+                    data={list}
+                    keyExtractor={item => item._id}
+                    style={{width: '100%'}}
+                    renderItem={({ item }) => 
                         <View key={item._id} style={style.commentArea} >
                             <Text style={style.name} >{item.user.name}</Text>
                             <Text style={style.date} >{utcToLocal(item.createdAt)}</Text>
                             <Text style={style.comment} >{item.comment}</Text>
-                            <Icon 
-                                name='trash-can-outline' 
-                                size={20} 
-                                color="#eb5757" 
-                                style={style.trashIcon} 
-                                onPress={() => deleteComment(item)}
-                            />
+                            {state.id === item.user._id ?
+                                <Icon 
+                                    name='trash-can-outline' 
+                                    size={20} 
+                                    color="#eb5757" 
+                                    style={style.trashIcon} 
+                                    onPress={() => deleteComment(item._id)}
+                                />
+                                :
+                            state.role === 'admin' ?
+                                <Icon 
+                                    name='trash-can-outline' 
+                                    size={20} 
+                                    color="#eb5757" 
+                                    style={style.trashIcon} 
+                                    onPress={() => deleteComment(item._id)}
+                                />
+                                :
+                            null
+                            }
                         </View>
-                    ))}
+                    }
+                />
 
-                    <View style={{width:'100%', marginBottom:40}} />
+                <View style={{ position: "absolute", bottom: 20, width: "100%" }} >
+                        <Input 
+                            placeholder="Adicionar comentário"
+                            value={comment}
+                            onChangeText={e=>setComment(e)}
+                            multiline
+                            radius={2}
+                        />
                 </View>
-                
-            </ScrollView>
 
-            <View style={{ position: "absolute", bottom: 20, width: "100%" }} >
-                    <Input 
-                        placeholder="Adicionar comentário"
-                        value={comment}
-                        onChangeText={e=>setComment(e)}
-                        multiline
-                        radius={2}
-                    />
+                <TouchableOpacity style={style.iconBack} onPress={handleIconBack} >
+                    <Icon2 name='arrow-back' size={15} color='#000' />
+                </TouchableOpacity>
+
+                <TouchableOpacity style={style.commentButton} onPress={confirm} >
+                    <Text style={style.buttonText} >Comentar</Text>
+                </TouchableOpacity>
+
+                {loading && <ActivityIndicator size="large" color="#fff" style={style.loading} /> }
+
             </View>
-
-            <TouchableOpacity style={style.iconBack} onPress={handleIconBack} >
-                <Icon2 name='arrow-back' size={15} color='#000' />
-            </TouchableOpacity>
-
-            <TouchableOpacity style={style.commentButton} onPress={confirm} >
-                <Text style={style.buttonText} >Comentar</Text>
-            </TouchableOpacity>
         </Modal>
     )
 }
@@ -143,11 +154,22 @@ const style = StyleSheet.create({
         position: "absolute",
         bottom: 0,
         width: '100%',
-        backgroundColor: "#5c5c5c",
+        backgroundColor: colors.darkBlue,
         height: 40,
 
         alignItems: 'center',
         justifyContent: 'center'
+    },
+    loading: {
+        position: 'absolute',
+        top: '10%'
+    },
+    container: {
+        flex: 1,
+        backgroundColor: colors.background,
+        justifyContent: 'flex-start',
+        alignItems: 'center',
+        paddingHorizontal: 10
     },
     iconBack: {
         width: 30,
@@ -164,9 +186,10 @@ const style = StyleSheet.create({
     commentArea: {
         marginTop: 5,
         marginBottom: 5,
-        backgroundColor: '#262626',
+        backgroundColor: colors.background,
         width: '100%',
-        padding: 10
+        padding: 10,
+        borderRadius: 5
     },
     trashIcon: {
         position: "absolute",

@@ -12,7 +12,7 @@ import EditProfile from '../pages/EditProfile'
 import NewPlace  from '../pages/NewPlace'
 import AddMarker from '../pages/AddMarker'
 import SeeProfile from '../pages/SeeProfile'
-import About from '../pages/About'
+import Updates from '../pages/Updates'
 import FocusOnNews from '../pages/FocusOnNews'
 
 // Personal to user
@@ -35,7 +35,7 @@ export default () => {
             <Stack.Screen name = 'UploadImages' component={UploadImages} />
             <Stack.Screen name = 'AddMarker' component={AddMarker} />
             <Stack.Screen name = 'SeeProfile' component={SeeProfile} />
-            <Stack.Screen name = 'About' component={About} />
+            <Stack.Screen name = 'Updates' component={Updates} />
             <Stack.Screen name = 'FocusOnNews' component={FocusOnNews} />
         </Stack.Navigator>
     )

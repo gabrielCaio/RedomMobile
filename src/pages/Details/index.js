@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useContext } from 'react'
 import { 
     View, 
     Text, 
@@ -14,9 +14,8 @@ import {
 import Icon from 'react-native-vector-icons/MaterialIcons'
 import Icon2 from 'react-native-vector-icons/MaterialCommunityIcons'
 
-import { setStatusBarHidden } from 'expo-status-bar'
-
 import style from './style'
+import { UserContext } from '../../contexts/userContext'
 
 import Stars from '../../components/Stars'
 import CardReview from '../../components/CardReview'
@@ -39,14 +38,15 @@ export default ({ navigation, route }) => {
     
     // ==================================== States =========================================//
     
-    const [visible, setVisible] = useState(false);
+    const [visible, setVisible] = useState(false)
     const [createReviewModalVisible, setcreateReviewModalVisible] = useState(false)
     const [haveImage, setHaveImage] = useState(true)
     const [haveReviews, setHaveReviews] = useState(true)
     const [reviews, setReviews] = useState([])
-    const [previewReview, setPreviewReview] = useState([]);
+    const [previewReview, setPreviewReview] = useState([])
     const [loading, setLoading] = useState(false)
     const [refresh, setRefresh] = useState(false)
+    const { state } = useContext(UserContext)
 
     // =================================== Effects =========================================//
 
@@ -60,7 +60,6 @@ export default ({ navigation, route }) => {
 
     useEffect(() => {
         let isMounted = true
-        setStatusBarHidden(true, true)
         setLoading(true)
         if(images.length === 0) setHaveImage(false)
         getReviews(isMounted)
@@ -97,6 +96,17 @@ export default ({ navigation, route }) => {
     function handleCloseCreateReview() {
         setRefresh(!refresh)
         setcreateReviewModalVisible(false)
+    }
+
+    async function deletePlace() {
+        try {
+            await api.delete(`/place/delete/${data._id}`)
+
+            alert("Lugar deletado com sucesso!")
+            navigation.goBack()
+        } catch (error) {
+          alert("Erro ao deletar Lugar")
+        }
     }
 
     // ================================= Component ================================ //
@@ -189,7 +199,15 @@ export default ({ navigation, route }) => {
                     <View style={{width: "100%", marginBottom: 60}} />
 
                 </View>
+
+                {state.role === 'admin' && 
+                    <TouchableOpacity style={style.delete} onPress={deletePlace} >
+                        <Icon2 name="trash-can" size={15} color="#f00" />
+                    </TouchableOpacity>
+                }
+
             </View>}
+
         </ScrollView>
     </SafeAreaView>
     

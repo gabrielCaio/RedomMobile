@@ -2,7 +2,7 @@ import React from 'react';
 import { StyleSheet, View, TextInput } from 'react-native'
 
 
-export default ({placeholder, value, onChangeText, password, type, multiline, size, width, fontSize, radius}) => {
+export default ({placeholder, value, onChangeText, password, type, multiline, size, width, fontSize, radius, onSubmitEditing}) => {
     return (
         <View style={ style.container(size ? size : 60, width ? width : '100%', radius ? radius : 10) }>
             <TextInput
@@ -12,6 +12,7 @@ export default ({placeholder, value, onChangeText, password, type, multiline, si
                 value={value}
                 onChangeText={onChangeText}
                 secureTextEntry={password}
+                onSubmitEditing={onSubmitEditing}
                 keyboardType={type}
                 multiline={multiline}
             />

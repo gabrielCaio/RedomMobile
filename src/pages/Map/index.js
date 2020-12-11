@@ -1,14 +1,11 @@
-import React, { useState, useEffect, useContext, useRef } from 'react'
-import { View, ActivityIndicator, Text, TouchableOpacity } from 'react-native'
+import React, { useState, useEffect, useContext, useRef, useCallback } from 'react'
+import { View, ActivityIndicator, Text, TouchableOpacity, Image } from 'react-native'
 
 import MapView, { Marker, PROVIDER_GOOGLE } from 'react-native-maps'
-import { useNavigation } from '@react-navigation/native'
+import { useNavigation, useFocusEffect } from '@react-navigation/native'
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons'
 import Icon2 from 'react-native-vector-icons/MaterialIcons'
-import * as Location from 'expo-location';
-
-import { StatusBar } from 'expo-status-bar'
-
+import * as Location from 'expo-location'
 
 // Assets
 import blue from '../../utils/MapStyleBlue'
@@ -31,42 +28,44 @@ export default () => {
     const [listMarkers, setListMarkers] = useState([])
     const [listNews, setListNews] = useState([])
     const [ready, setReady] = useState(false)
+    const [error, setError] = useState(false)
     const [userLocation, setUserLocation] = useState(null)
     const [loading, setLoading] = useState(false)
-    const [filter, setFilter] = useState({ news: true, places: true })
+    const [filterPlacesState, setFilterPlacesState] = useState(true)
+    const [filterNewsState, setFilterNewsState] = useState(true)
     const [modal, setModal] = useState(false)
     const [filterColors, setFilterColors] = useState({ one: '#fff', two: colors.fontLighter, three: colors.fontLighter })
 
     const mapRef = useRef(MapView)
 
-    const { dispatch } = useContext(UserContext)
+    const { state, dispatch } = useContext(UserContext)
 
-    // Setting navigations as useNavigation
-    const navigation = useNavigation();
+    const navigation = useNavigation()
+
+    useFocusEffect(
+        useCallback(() => {
+            const getLocation = async () => {await Location.getCurrentPositionAsync({})}
+            getLocation()
+        }, [])
+    )
     
     useEffect(() => {
-        let isMounted = true;
-        (async (isMounted) => {
-            if(isMounted) {
-                let { status } = await Location.requestPermissionsAsync();
-                if (status !== 'granted') setReady(false)
-            }
-        })();
-        getMarkers(isMounted);
+        let isMounted = true
+        if(isMounted) setLoading(true)
+        if(ready) getMarkers(isMounted).then(() => setLoading(false))
         return () => { isMounted = false }
-    }, [])
+    }, [ready])
 
-    // Function to get the markers from api
-    async function getMarkers(isMounted) {
+    const getMarkers = useCallback(async (isMounted) => {
         try {
-            let location = await Location.getCurrentPositionAsync({});
+            let location = await Location.getCurrentPositionAsync({})
 
             const marker = await api.post("/place/nearUser", {
                 latitude: location.coords.latitude,
                 longitude: location.coords.longitude,
                 dist: 30000
             })
-
+            
             const news = await api.post("/news/nearUser", {
                 latitude: location.coords.latitude,
                 longitude: location.coords.longitude,
@@ -82,19 +81,16 @@ export default () => {
                         longitude: location.coords.longitude
                     }
                 })
-                if(marker.data.length === 0) setFilter({ places: false })
-                if(news.data.length === 0) setFilter({ news: false })
+                if(marker.data.length === 0) setFilterPlacesState(false)
+                if(news.data.length === 0) setFilterNewsState(false)
                 setListMarkers(marker.data)
                 setListNews(news.data)
-                setReady(true)
             }
         } catch (error) {
-            if(error.response) alert(error.response.data.error)
-            else alert("Erro ao carregar marcadores")
+            setError(true)
         }
-    }
-    
-    // This function is passed to every marker
+    }, [])
+
     function handlePressMarker(data) {
         navigation.navigate('Details', {data});
     }
@@ -103,8 +99,7 @@ export default () => {
         setLoading(true)
         getMarkers(true).then(() => setLoading(false))
     }
-    
-    // Redirects user to add marker page
+
     function handleAddMarkerPage() {
         navigation.navigate("AddMarker", { markers: listMarkers });
     }
@@ -126,40 +121,106 @@ export default () => {
     function filterNews() {
         setModal(false)
         setFilterColors({ one: colors.fontLighter, two: "#fff", three: colors.fontLighter })
-        setFilter({ news: true, places: false })
+        setFilterNewsState(true)
+        setFilterPlacesState(false)
     }
 
     function filterPlaces() {
         setModal(false)
         setFilterColors({ one: colors.fontLighter, two: colors.fontLighter, three: "#fff" })
-        setFilter({ news: false, places: true })
+        setFilterNewsState(false)
+        setFilterPlacesState(true)
     }
 
     function filterAll() {
         setModal(false)
         setFilterColors({ one: "#fff", two: colors.fontLighter, three: colors.fontLighter })
-        setFilter({ news: true, places: true })
+        setFilterNewsState(true)
+        setFilterPlacesState(true)
     }
 
     function handleNewsPress(item) {
         navigation.navigate("FocusOnNews", { item })
     }
 
+    // sets the map ready
+    function setMapReady() {
+        setReady(true)
+    }
+
+    // Load all place markers
+    function loadMarkersPlaces() {
+        return (
+            listMarkers.map((item, key) => <Marker
+                key={key.toString()}
+                coordinate={{
+                    latitude: parseFloat(item.location.coordinates[1]),
+                    longitude: parseFloat(item.location.coordinates[0]),
+                }}
+                title={item.title}
+                // pinColor={ 
+                //     item.tags[0] === 'Musica' ? 'blue' :
+                //     item.tags[0] === 'Restaurante' ? 'purple' :
+                //     item.tags[0] === 'Lanches' ? 'orange' :
+                //     item.tags[0] === 'Ar Livre' ? 'green' : 'green'
+                // }
+                description={item.description}
+                onCalloutPress={() => handlePressMarker(item)}
+                // tracksViewChanges={false}
+            >
+                <Image style={style.mapIcon} source={
+                    item.tags[0] === 'Musica' ? MusicaIcon :
+                    item.tags[0] === 'Restaurante' ? RestauranteIcon :
+                    item.tags[0] === 'Lanches' ? FastFoodIcon :
+                    item.tags[0] === 'Ar Livre' ? ArLivreIcon : ArLivreIcon
+                } />
+            </Marker>
+            )
+        )
+    }
+
+    // Load all news markers
+    function loadNewsMarkers() {
+        return (
+            listNews.map((item, key) => (
+                <Marker
+                    key={key.toString()}
+                    coordinate={{
+                        latitude: parseFloat(item.location.coordinates[1]),
+                        longitude: parseFloat(item.location.coordinates[0]),
+                    }}
+                    title='Notícia'
+                    description={item.description}
+                    onCalloutPress={() => handleNewsPress(item)}
+                    // tracksViewChanges={false}
+                    pinColor="yellow"
+                >
+                    <Image style={style.mapIcon} source={NoticiaIcon} />
+                </Marker>
+            ))
+        )
+    }
+
     return (
         <View style={style.container} >
 
-            <StatusBar style='light' backgroundColor={colors.background} />
+            {!ready && !error && <ActivityIndicator size="large" color="#f2f2f2" />}
 
-            { !ready &&  <ActivityIndicator size="large" color="#f2f2f2" /> }
+            {error && (
+                <View style={style.errorArea} >
+                    <Text style={style.errorMessage} >Erro ao carregar o mapa</Text>
+                    <TouchableOpacity style={style.errorButton} onPress={getMarkers} >
+                        <Text style={style.errorText} >Tentar de novo</Text>
+                    </TouchableOpacity>
+                </View>
+            )}
 
-            {ready && (
-                // show the map to the user when ready
-                <MapView
+            <MapView
                 ref={mapRef}
                 style={style.map}
                 initialRegion={{
-                    latitude: userLocation.coords.latitude,
-                    longitude: userLocation.coords.longitude,
+                    latitude: parseFloat(state.latitude),
+                    longitude: parseFloat(state.longitude),
                     latitudeDelta: 0.008,
                     longitudeDelta: 0.008, 
                 }}
@@ -168,101 +229,15 @@ export default () => {
                 showsMyLocationButton={false}
                 provider={PROVIDER_GOOGLE}
                 showsCompass={false}
-                >
+                onLayout={setMapReady}
+            >
 
-                {filter.news && listNews.map((item, key) => (
-                    <Marker
-                        key={key.toString()}
-                        coordinate={{
-                            latitude: parseFloat(item.location.coordinates[1]),
-                            longitude: parseFloat(item.location.coordinates[0]),
-                        }}
-                        image={NoticiaIcon}
-                        title='Notícia'
-                        description={item.description}
-                        onCalloutPress={() => handleNewsPress(item)}
-                    />
-                    ))
-                }
+                {ready && filterNewsState && loadNewsMarkers()}
 
-                {filter.places && listMarkers.map((item, key) => {
-                    switch (item.tags[0]) {
-                        case 'Musica':
-                            return (
-                                <Marker
-                                    key={key.toString()}
-                                    coordinate={{
-                                        latitude: parseFloat(item.location.coordinates[1]),
-                                        longitude: parseFloat(item.location.coordinates[0]),
-                                    }}
-                                    image={MusicaIcon}
-                                    title={item.title}
-                                    description={item.description}
-                                    onCalloutPress={() => handlePressMarker(item)}
-                                />
-                            )
-                        case 'Ar Livre':
-                            return (
-                                <Marker
-                                    key={key.toString()}
-                                    coordinate={{
-                                        latitude: parseFloat(item.location.coordinates[1]),
-                                        longitude: parseFloat(item.location.coordinates[0]),
-                                    }}
-                                    image={ArLivreIcon}
-                                    title={item.title}
-                                    description={item.description}
-                                    onCalloutPress={() => handlePressMarker(item)}
-                                />
-                            )
-                        case 'Restaurante':
-                            return (
-                                <Marker
-                                    key={key.toString()}
-                                    coordinate={{
-                                        latitude: parseFloat(item.location.coordinates[1]),
-                                        longitude: parseFloat(item.location.coordinates[0]),
-                                    }}
-                                    image={RestauranteIcon}
-                                    title={item.title}
-                                    description={item.description}
-                                    onCalloutPress={() => handlePressMarker(item)}
-                                />
-                            )
-                        case 'Lanches':
-                            return (
-                                <Marker
-                                    key={key.toString()}
-                                    coordinate={{
-                                        latitude: parseFloat(item.location.coordinates[1]),
-                                        longitude: parseFloat(item.location.coordinates[0]),
-                                    }}
-                                    image={FastFoodIcon}
-                                    title={item.title}
-                                    description={item.description}
-                                    onCalloutPress={() => handlePressMarker(item)}
-                                />
-                            )
-                        default:
-                            return (
-                                <Marker
-                                    key={key.toString()}
-                                    coordinate={{
-                                        latitude: parseFloat(item.location.coordinates[1]),
-                                        longitude: parseFloat(item.location.coordinates[0]),
-                                    }}
-                                    image={ArLivreIcon}
-                                    title={item.title}
-                                    description={item.description}
-                                    onCalloutPress={() => handlePressMarker(item)}
-                                />
-                            )
-                    }
-                })}
+                {ready && filterPlacesState && loadMarkersPlaces()}
             
-            </MapView>
-            // -----------> Here ends the MapView
-            )}
+        </MapView>
+
             {loading && <ActivityIndicator size='large' color='#f2f2f2' style={{position:'absolute',top:50}} />}
 
             {ready && <Text style={style.headerText} onPress={handleReloadPress} >Mapa</Text>}

@@ -41,6 +41,11 @@ const style = StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'center'
+    },
+    mapIcon: {
+        width: 35,
+        height: 30,
+        resizeMode: 'contain'
     }
 })
 

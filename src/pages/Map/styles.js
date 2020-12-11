@@ -61,6 +61,34 @@ const style = StyleSheet.create({
         justifyContent: 'center',
         padding: 5
       },
+      errorArea: {
+        flex: 1,
+        alignItems: 'center',
+        justifyContent: 'center',
+      },
+      errorMessage: {
+        color: '#f2f2f2',
+        fontFamily: 'Domine_400Regular',
+        fontSize: 18
+
+      },
+      errorButton: {
+        backgroundColor: colors.darkBlue,
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: 10,
+        borderRadius: 5,
+        marginTop: 20
+      },
+      errorText: {
+        color: colors.fontLighter,
+        fontFamily: 'Domine_400Regular',
+      },
+      mapIcon: {
+        width: 35,
+        height: 30,
+        resizeMode: 'contain'
+      }
 })
 
 export default style;

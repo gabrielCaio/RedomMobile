@@ -57,18 +57,18 @@ export default ({ navigation }) => {
             setLoading(false);
 
             // Reseting navigation to main tab
-            navigation.navigate("MainTab");
+            navigation.navigate("MainTab")
 
 
         } catch (error) {
-            if(error.response) alert(error.response.data.error)
-            alert("Erro ao logar");
+            setLoading(false)
+            alert("Usuário não encontrado ou não existe")
         }
     }
 
     // This function redirects user to SignUp page
     function handleRedirectSignUpPage() {
-        navigation.navigate("SignUp");
+        navigation.navigate("SignUp")
     }
 
     return (

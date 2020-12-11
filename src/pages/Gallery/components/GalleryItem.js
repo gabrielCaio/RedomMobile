@@ -2,13 +2,14 @@ import React, { useState, useEffect, useCallback, useContext } from 'react'
 import { View, Text, StyleSheet, Image, TouchableOpacity, Dimensions } from 'react-native'
 
 import Icon2 from 'react-native-vector-icons/MaterialIcons'
+import TrashIcon from 'react-native-vector-icons/MaterialCommunityIcons'
 import NewsIcon from 'react-native-vector-icons/FontAwesome'
 import noAvatar from '../../../assets/noAvatar.png'
 
 import { useNavigation } from '@react-navigation/native'
-// import { UserContext } from '../../../contexts/userContext'
+import { UserContext } from '../../../contexts/userContext'
 
-// import api from '../../../api'
+import api from '../../../api'
 
 
 export default ({ item, showMore, type}) => {
@@ -17,7 +18,7 @@ export default ({ item, showMore, type}) => {
     const [show, setShow] = useState(false)
     const [commentButtonDisable, setCommentButtonDisable] = useState(false)
 
-    // const { state } = useContext(UserContext)
+    const { state, refreshFeed } = useContext(UserContext)
 
     const navigation = useNavigation()
 
@@ -50,6 +51,17 @@ export default ({ item, showMore, type}) => {
     //         else alert('Erro ao dar dislike')
     //     }
     // }
+
+    async function deletePost() {
+        try {
+            await api.delete(`/admin/deletePost/${item._id}`)
+
+            alert("Post deletado com sucesso!")
+            refreshFeed()
+        } catch (error) {
+            alert("Erro ao deletar post")
+        }
+    }
 
     function handleAvatarPress() {
         const user = item.user._id
@@ -89,7 +101,7 @@ export default ({ item, showMore, type}) => {
             <View style={style.header} >
                 <TouchableOpacity onPress={handleAvatarPress} >
                     <Image 
-                        source={item.user.avatar === undefined ? noAvatar : { uri: item.user.avatar.url} } 
+                        source={!item.user.avatar ? noAvatar : { uri: item.user.avatar.url} } 
                         style={style.avatar} 
                     />
                 </TouchableOpacity>
@@ -101,6 +113,12 @@ export default ({ item, showMore, type}) => {
                 </View>
                 {type === 0 && <Icon2 name='camera' size={20} color='#f2f2f2' style={style.icon} />}
                 {type === 1 && <NewsIcon name='newspaper-o' size={20} color='#f2f2f2' style={style.icon} />}
+
+                {state.role === 'admin' &&
+                    <TouchableOpacity style={style.delete} onPress={deletePost} >
+                        <TrashIcon name="trash-can" size={15} color="#f00" />
+                    </TouchableOpacity>
+                }
             </View>
 
             <TouchableOpacity style={style.description} onPress={handleDescriptionPress} >
@@ -108,7 +126,7 @@ export default ({ item, showMore, type}) => {
                 {show && <Text style={style.descriptionText} >{item.description}</Text>}
             </TouchableOpacity>
 
-            <Image style={style.post} source={{ uri: item.image.url}} />
+            <Image style={style.post} source={item.image ? { uri: item.image.url} : noAvatar }/>
 
             {/* {type === 0 && 
                 <View style={style.footer}>
@@ -149,6 +167,16 @@ const style = StyleSheet.create({
         backgroundColor: "#003B4C80",
         marginVertical: 10,
         borderRadius: 8,
+    },
+    delete: {
+        backgroundColor: '#f2f2f2',
+        position: 'absolute',
+        right: 50,
+        height: 30,
+        width: 30,
+        borderRadius: 30,
+        alignItems: 'center',
+        justifyContent: 'center',
     },
     header: {
         margin: 10,

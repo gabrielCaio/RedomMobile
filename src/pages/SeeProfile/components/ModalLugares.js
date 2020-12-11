@@ -120,7 +120,7 @@ const style = StyleSheet.create({
     },
     card: {
         width: "100%",
-        backgroundColor: "#5c5c5c",
+        backgroundColor: colors.darkBlue,
         padding: 20,
         alignItems: 'center',
         justifyContent: "center",
@@ -132,18 +132,19 @@ const style = StyleSheet.create({
         height: 480,
     },
     title: {
-        color: "#f2f2f2",
+        color: colors.fontLight,
         fontSize: 16,
         fontFamily: "Domine_700Bold",   
+        fontWeight: 'bold'
     },
     date: {
-        color: "#f2f2f2",
+        color: colors.fontLight,
         fontFamily: "Domine_400Regular",
         fontSize: 12,
     },
     description: {
         marginVertical: 20,
-        color: "#f2f2f2",
+        color: colors.fontLighter,
         fontFamily: "Domine_400Regular"
     },
     closeIcon: {

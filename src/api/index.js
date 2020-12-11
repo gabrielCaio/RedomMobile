@@ -4,17 +4,15 @@ import AsyncStorage from '@react-native-community/async-storage'
 const production = "https://app-lugares.herokuapp.com"
 
 const api = axios.create({
-    baseURL: production,
-    timeout: 10000
+    baseURL: production
 })
 
-
 api.interceptors.request.use(async (config) => {
-    const token = await AsyncStorage.getItem("token");
+    const token = await AsyncStorage.getItem("token")
     if (token) config.headers = {
         'Authorization': `Bearer ${token}`
-    };
-    return config;
-});
+    }
+    return config
+})
 
-export default api;
+export default api

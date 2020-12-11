@@ -40,15 +40,15 @@ export default ({ navigation }) => {
     const [refresh, setRefresh] = useState(false)
     const [loading, setLoading] = useState(false)
     const [visible, setVisible] = useState(false)
-    const [myReviewsVisible, setMyReviewsVisible] = useState(false)
+    // const [myReviewsVisible, setMyReviewsVisible] = useState(false)
 
     // Getting posts of user on mount
     useEffect(() => {
         let isMounted = true
-        setStatusBarHidden(true, true);
-        setLoading(true);
-        getPosts(isMounted, false);
-        getNewData(isMounted);
+        setStatusBarHidden(true, true)
+        setLoading(true)
+        getPosts(isMounted, false)
+        getNewData(isMounted)
         return () => { isMounted = false }
     }, []);
 
@@ -82,7 +82,7 @@ export default ({ navigation }) => {
             const res = await api.get('/post/listPostsSelf')
 
             if(isMounted) {
-                setPosts(res.data);
+                setPosts(res.data)
 
                 if(reload) {
                     setRefresh(false)
@@ -91,14 +91,14 @@ export default ({ navigation }) => {
             }
         } catch (error) {
             if(error.response) alert(error.response.data.error)
-            else alert("Erro ao buscar posts");
+            else alert("Erro ao buscar posts")
         }
     }
 
     // Function to handle edit profile button press
     const handleEdit = () => {
         closeModal()
-        navigation.navigate('EditProfile');
+        navigation.navigate('EditProfile')
     }
 
     // Function to Logout the user
@@ -109,12 +109,12 @@ export default ({ navigation }) => {
                 type: 'clear'
             })
             closeModal()
-            alert("Deslogado com sucesso!");
+            alert("Deslogado com sucesso!")
             navigation.reset({
                 routes:[{name:'SignIn'}]
             });
         }catch(erro) {
-            alert("Erro ao deslogar");
+            alert("Erro ao deslogar")
         }
     }
 
@@ -127,7 +127,7 @@ export default ({ navigation }) => {
     // Redirect user to my places
     function handleRedirectToMyPlaces() {
         closeModal()
-        navigation.navigate("MyPlaces");
+        navigation.navigate("MyPlaces")
     }
 
     // close Modal
@@ -142,9 +142,9 @@ export default ({ navigation }) => {
         getNewData(true);
     }
 
-    function redirectToAbout() {
-        setVisible(false);
-        navigation.navigate("About");
+    function redirectToUpdates() {
+        setVisible(false)
+        navigation.navigate("Updates")
     }
 
     return (
@@ -157,16 +157,16 @@ export default ({ navigation }) => {
                 admin={state.role === 'admin'}
                 approvePlaces={handleRedirectToAdminPage}
                 logout={handleLogout}
-                about={redirectToAbout}
+                about={redirectToUpdates}
                 editProfile={handleEdit}
             />
 
-            {myReviewsVisible && 
+            {/* {myReviewsVisible && 
                 <ModalMyReviews
                     visible={myReviewsVisible}
                     close={()=>setMyReviewsVisible(false)}
                 />
-            }
+            } */}
 
 
             <View style={style.headerView} >
@@ -192,7 +192,7 @@ export default ({ navigation }) => {
 
                 <View style={{width:1,height:'40%',backgroundColor:"#f2f2f2"}} />
 
-                <TouchableOpacity style={style.infoItem} onPress={()=>setMyReviewsVisible(true)} >
+                <TouchableOpacity style={style.infoItem} onPress={()=>{}} >
                     <Text style={style.info} >{state.numReviews}</Text>
                     <Text style={style.info} >Reviews</Text>
                 </TouchableOpacity>

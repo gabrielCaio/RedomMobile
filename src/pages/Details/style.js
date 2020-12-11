@@ -118,6 +118,17 @@ const style = StyleSheet.create({
         fontFamily: "Domine_400Regular",
         textAlign: 'center'
     },
+    delete: {
+        position: 'absolute',
+        top: 30,
+        right: 10,
+        height: 30,
+        width: 30,
+        borderRadius: 30,
+        backgroundColor: '#f2f2f2',
+        alignItems: 'center',
+        justifyContent: 'center',
+    }
 })
 
 export default style;

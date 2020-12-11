@@ -1,8 +1,5 @@
 import React from 'react'
 import { View, Text, ImageBackground, Image, FlatList, TouchableOpacity } from 'react-native'
-
-import { setStatusBarHidden } from 'expo-status-bar'
-
 import style from '../Profile/styles'
 
 import Icon from 'react-native-vector-icons/MaterialIcons'
@@ -34,7 +31,6 @@ export default ({ route, navigation }) => {
 
     React.useEffect(() => {
         let isMounted = true
-        setStatusBarHidden(true,true);
         getInfo(isMounted);
         return () => { isMounted = false }
     }, [])
@@ -65,8 +61,8 @@ export default ({ route, navigation }) => {
         <View style={style.container} >
                 
                 <View style={style.bannerArea} >
-                        <ImageBackground source={{uri: userData.banner}} style={style.banner} imageStyle={{opacity:0.2}} >
-                            <Image source={{uri: userData.avatar}} style={style.avatar} />
+                        <ImageBackground source={userData.banner ? {uri: userData.banner} : noAvatar} style={style.banner} imageStyle={{opacity:0.2}} >
+                            <Image source={userData.avatar ? {uri: userData.avatar} : noAvatar} style={style.avatar} />
                             <Text style={style.name} >{userData.name}</Text>
                         </ImageBackground>
                 </View>

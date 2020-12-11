@@ -1,5 +1,5 @@
 import React, { useContext, useState, useEffect } from 'react'
-import { Modal, View, StyleSheet, Text, TouchableOpacity, ActivityIndicator } from 'react-native'
+import { Modal, View, StyleSheet, Text, TouchableOpacity, ActivityIndicator, Image } from 'react-native'
 import MapView, { PROVIDER_GOOGLE, Marker } from 'react-native-maps'
 import Icon from 'react-native-vector-icons/MaterialIcons'
 
@@ -16,11 +16,9 @@ import MusicaIcon from '../../../assets/markers/musica.png'
 export default ({ visible, close, type, createPostWithPlace, createPostWithoutPlace, createNews }) => {
     const { state } = useContext(UserContext)
 
-    React.useEffect(() => {
-        console.log(type)
-    }, [])
 
     const [listMarkers, setListMarkers] = useState([])
+    const [mapReady, setMapReady] = useState(false)
     const [loading, setLoading] = useState(false)
     const [showMarker, setShowMarker] = useState(false)
     const [data, setData] = useState({ latitude: 0, longitude: 0 })
@@ -89,84 +87,40 @@ export default ({ visible, close, type, createPostWithPlace, createPostWithoutPl
                     customMapStyle={mapStyle}
                     showsUserLocation
                     showsMyLocationButton={false}
+                    onLayout={() => setMapReady(true)}
                     onPress={handleMapPress}
                 >
-                    {listMarkers.map((item, key) => {
-                        switch (item.tags[0]) {
-                            case 'Musica':
-                                return (
-                                    <Marker
-                                        key={key.toString()}
-                                        coordinate={{
-                                            latitude: parseFloat(item.location.coordinates[1]),
-                                            longitude: parseFloat(item.location.coordinates[0]),
-                                        }}
-                                        image={MusicaIcon}
-                                        title={item.title}
-                                        description={item.description}
-                                        onCalloutPress={() => handlePressMarker(item)}
-                                    />
-                                )
-                            case 'Ar Livre':
-                                return (
-                                    <Marker
-                                        key={key.toString()}
-                                        coordinate={{
-                                            latitude: parseFloat(item.location.coordinates[1]),
-                                            longitude: parseFloat(item.location.coordinates[0]),
-                                        }}
-                                        image={ArLivreIcon}
-                                        title={item.title}
-                                        description={item.description}
-                                        onCalloutPress={() => handlePressMarker(item)}
-                                    />
-                                )
-                            case 'Restaurante':
-                                return (
-                                    <Marker
-                                        key={key.toString()}
-                                        coordinate={{
-                                            latitude: parseFloat(item.location.coordinates[1]),
-                                            longitude: parseFloat(item.location.coordinates[0]),
-                                        }}
-                                        image={RestauranteIcon}
-                                        title={item.title}
-                                        description={item.description}
-                                        onCalloutPress={() => handlePressMarker(item)}
-                                    />
-                                )
-                            case 'Lanches':
-                                return (
-                                    <Marker
-                                        key={key.toString()}
-                                        coordinate={{
-                                            latitude: parseFloat(item.location.coordinates[1]),
-                                            longitude: parseFloat(item.location.coordinates[0]),
-                                        }}
-                                        image={FastFoodIcon}
-                                        title={item.title}
-                                        description={item.description}
-                                        onCalloutPress={() => handlePressMarker(item)}
-                                    />
-                                )
-                            default:
-                                return (
-                                    <Marker
-                                        key={key.toString()}
-                                        coordinate={{
-                                            latitude: parseFloat(item.location.coordinates[1]),
-                                            longitude: parseFloat(item.location.coordinates[0]),
-                                        }}
-                                        image={RestauranteIcon}
-                                        title={item.title}
-                                        description={item.description}
-                                        onCalloutPress={() => handlePressMarker(item)}
-                                    />
-                                )
-                        }
-                    })}
+                    {mapReady && listMarkers.map((item, key) => (
+                            <Marker
+                                key={key.toString()}
+                                coordinate={{
+                                    latitude: parseFloat(item.location.coordinates[1]),
+                                    longitude: parseFloat(item.location.coordinates[0]),
+                                }}
+                                title={item.title}
+                                description={item.description}
+                                onCalloutPress={() => handlePressMarker(item)}
+                                pinColor={ 
+                                    item.tags[0] === 'Musica' ? 'blue' :
+                                    item.tags[0] === 'Restaurante' ? 'purple' :
+                                    item.tags[0] === 'Lanches' ? 'orange' :
+                                    item.tags[0] === 'Ar Livre' ? 'green' : 'green'
+                                }
+                            >
 
-                    {showMarker && (
+                                {/* <Image style={style.mapIcon} source={
+                                    item.tags[0] === 'Musica' ? MusicaIcon :
+                                    item.tags[0] === 'Restaurante' ? RestauranteIcon :
+                                    item.tags[0] === 'Lanches' ? FastFoodIcon :
+                                    item.tags[0] === 'Ar Livre' ? ArLivreIcon : ArLivreIcon
+                                } /> */}
+
+                            </Marker>
+                        )
+                    )
+                    }
+
+                    {mapReady && showMarker && (
                         <Marker 
                             coordinate={data}
                             draggable
@@ -260,4 +214,9 @@ const style = StyleSheet.create({
         justifyContent: 'center',
         borderRadius: 10,
     },
+    mapIcon: {
+        width: 35,
+        height: 30,
+        resizeMode: 'contain'
+    }
 })

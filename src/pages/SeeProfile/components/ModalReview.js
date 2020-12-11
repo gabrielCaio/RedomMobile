@@ -4,7 +4,6 @@ import { Modal, View, StyleSheet, Text, FlatList, ActivityIndicator, TouchableOp
 import Icon from 'react-native-vector-icons/MaterialIcons'
 import api from '../../../api'
 import Stars from '../../../components/Stars'
-import colors from '../../../utils/colors'
 import color from '../../../utils/colors'
 
 function EmptyList() {

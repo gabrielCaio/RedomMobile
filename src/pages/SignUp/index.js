@@ -8,10 +8,10 @@ import Logo from '../../assets/svg/logoSvg'
 import api from '../../api'
 
 export default ({ navigation }) => {
-    const [nome, setNome] = useState();
-    const [email, setEmail] = useState();
-    const [senha, setSenha] = useState();
-    const [username, setUsername] = useState();
+    const [nome, setNome] = useState()
+    const [email, setEmail] = useState()
+    const [senha, setSenha] = useState()
+    const [username, setUsername] = useState()
     const [loading, setLoading] = useState(false)
 
     async function handleCadastro() {
@@ -25,16 +25,15 @@ export default ({ navigation }) => {
             })
             
             setLoading(false)
-            alert("Usuário Cadastrado com sucesso!");
-            navigation.navigate("SignIn");
+            alert("Usuário Cadastrado com sucesso!")
+            navigation.navigate("SignIn")
         } catch (error) {
-            if(error.response) alert(error.response.data.error)
-            else alert("Erro ao cadastrar")
+            alert("Erro ao cadastrar")
         }
     }
 
     const handleRedirectSignIn = () => {
-        navigation.navigate("SignIn");
+        navigation.navigate("SignIn")
     }
 
     return (

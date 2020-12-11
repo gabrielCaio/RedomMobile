@@ -1,5 +1,5 @@
-import React, { createContext, useReducer, useCallback } from 'react';
-import { initialState, UserReducer } from '../reducers/userReducer';
+import React, { createContext, useReducer, useCallback } from 'react'
+import { initialState, UserReducer } from '../reducers/userReducer'
 
 import AsyncStorage from '@react-native-community/async-storage'
 

@@ -30,11 +30,14 @@ export default ({ visible, close, logout, admin, approvePlaces, about, editProfi
                         </TouchableOpacity>
 
                         <View style={{width:250, backgroundColor: color.fontLight, height: 1}} />
+
                         {admin && (
-                            <TouchableOpacity style={{alignItems: 'center'}} onPress={approvePlaces} >
+                            <View style={style.adminButton} >
+                                <TouchableOpacity style={style.button} onPress={approvePlaces} >
                                 <Text style={style.item} >Aprovar lugares (admin)</Text>
-                                <View style={{width:250, backgroundColor: color.fontLighter, height: 1, marginBottom: 20}} />
-                            </TouchableOpacity>
+                                </TouchableOpacity>
+                                <View style={{width:250, backgroundColor: color.fontLighter, height: 1}} />
+                            </View>
                         )}
 
                         <TouchableOpacity onPress={logout} style={style.button} >
@@ -44,7 +47,7 @@ export default ({ visible, close, logout, admin, approvePlaces, about, editProfi
                         <View style={{width:250, backgroundColor: color.fontLight, height: 1, marginBottom: 0}} />
 
                         <TouchableOpacity onPress={about} style={style.about} >
-                            <Text style={style.item} >Sobre</Text>
+                            <Text style={style.item} >Atualizações</Text>
                         </TouchableOpacity>
                     </View>
 
@@ -104,7 +107,6 @@ const style = StyleSheet.create({
         width: '100%',
         alignItems: 'center',
         justifyContent: 'center',
-        // backgroundColor: "#f00",
         paddingVertical: 20
     },
     about: {
@@ -116,4 +118,9 @@ const style = StyleSheet.create({
         borderBottomLeftRadius: 20,
         borderBottomRightRadius: 20,
     },
+    adminButton: {
+        width: '100%',
+        alignItems: 'center',
+        justifyContent: 'center',
+    }
 })

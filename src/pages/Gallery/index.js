@@ -81,7 +81,7 @@ export default () => {
 
     useEffect(() => {
         let isMounted = true;
-        if(page !== 1 && !end) getMorePosts(isMounted);
+        if(page !== 1 && !end) getMorePosts(isMounted)
         return () => { isMounted = false }
     }, [page])
 
@@ -101,7 +101,7 @@ export default () => {
                 longitude: state.longitude,
                 dist: 30000
             })
-            // console.log(res.data)
+            
             if(isMounted) {
                 setPage(1)
                 setPosts(post.data.docs)
@@ -180,7 +180,7 @@ export default () => {
                 onRefresh={onRefresh}
                 onEndReached={onEndReached}
                 onEndReachedThreshold={0.1}
-                renderItem={({item}) => 
+                renderItem={({item}) =>
                     <Item 
                         item={item}
                         showMore={() => showMore(item)}

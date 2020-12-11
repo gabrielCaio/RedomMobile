@@ -2,7 +2,7 @@ import React, { useState } from 'react'
 import { SafeAreaView ,View, Text, Image, ImageBackground, TouchableOpacity } from 'react-native'
 
 import style from './style.js'
-
+import noAvatar from '../../assets/noAvatar.png'
 
 export default ({ route }) => {
 
@@ -20,7 +20,7 @@ export default ({ route }) => {
                 <ImageBackground source={{uri: data.image.url}} style={style.image} >
                     {show && (
                         <View style={style.descriptionArea} >
-                            <Image source={{uri: data.user.avatar.url}} style={style.avatar} />
+                            <Image source={data.user.avatar ? {uri: data.user.avatar.url} : noAvatar} style={style.avatar} />
                             <Text style={style.name} >{data.user.name}</Text>
                             <Text style={style.description} >{data.description}</Text>
                         </View>

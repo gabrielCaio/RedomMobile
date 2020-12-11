@@ -11,7 +11,7 @@ import color from '../../utils/colors'
 // Type 0 para restaurante
 // Type 1 para Ar Livre
 // Type 2 para Lanches
-// Type 3 para Música
+// Type 3 para Musica
 
 export default ({ navigation, route }) => {
 

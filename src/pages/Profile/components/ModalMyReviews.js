@@ -6,25 +6,37 @@ import api from '../../../api'
 import Stars from '../../../components/Stars'
 import color from '../../../utils/colors'
 
+function EmptyList() {
+    return (
+        <View style={style.emptyView} >
+            <Text style={style.text} >Sem reviews</Text>
+        </View>
+    )
+}
+
 export default ({ visible, close }) => {
 
     const [reviews, setReviews] = useState([])
     const [loading, setLoading] = useState(true)
 
     useEffect(() => {
+        let isMounted = true
         const getReviews = async () => {
             try {
                 const res = await api.get("/review/myReviews")
-                setReviews(res.data)
-
-                setLoading(false);
+                if(isMounted) {
+                    setReviews(res.data)
+                    setLoading(false)
+                }
             } catch (error) {
                 alert("Erro ao buscar reviews")
-                close();
+                close()
             }
         }
 
-        getReviews();
+        getReviews()
+
+        return () => { isMounted = false }
     }, [])
 
     return (
@@ -38,7 +50,7 @@ export default ({ visible, close }) => {
                 <Text style={style.headerText} >My Reviews</Text>
 
                 {loading && <ActivityIndicator size='large' color='#f2f2f2' /> }
-                
+
                 {!loading && 
                 <FlatList
                     data={reviews}
@@ -51,6 +63,7 @@ export default ({ visible, close }) => {
                             <Text style={style.text} >{item.review}</Text>
                         </View>
                     }
+                    ListEmptyComponent={EmptyList}
                 />
                 }
 
@@ -71,6 +84,11 @@ const style = StyleSheet.create({
         justifyContent: 'flex-start',
         backgroundColor: color.background,
         paddingTop: 20
+    },
+    emptyView: {
+        width: '100%',
+        alignItems: 'center',
+        justifyContent: 'center',
     },
     text: {
         color: "#f2f2f2",

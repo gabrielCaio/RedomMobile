@@ -14,8 +14,8 @@ export default function App() {
     Domine_700Bold
   });
 
-  setStatusBarBackgroundColor("#262626", true);
-  setStatusBarHidden(true, true);
+  setStatusBarBackgroundColor("#003B4C", true)
+  setStatusBarHidden(true, true)
 
   if (!fontsLoaded) {
     return <AppLoading />;
@@ -23,10 +23,10 @@ export default function App() {
 
   return (
     <UserContext>
+      <StatusBar style="light" />
       <NavigationContainer>
-        <StatusBar style="light" />
         <MainStack />
       </NavigationContainer>
     </UserContext>
-  );
+  )
 }

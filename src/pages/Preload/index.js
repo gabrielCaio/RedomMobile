@@ -1,8 +1,10 @@
-import React, { useEffect, useContext } from 'react'
-import { ActivityIndicator, StyleSheet, SafeAreaView } from 'react-native'
+import React, { useEffect, useContext, useState } from 'react'
+import { ActivityIndicator, StyleSheet, SafeAreaView, Text } from 'react-native'
 
 import AsyncStorage from '@react-native-community/async-storage'
 import { useNavigation } from '@react-navigation/native'
+import * as Location from 'expo-location'
+import * as Permission from 'expo-permissions'
 
 import { UserContext } from '../../contexts/userContext'
 import api from '../../api'
@@ -13,34 +15,46 @@ import color from '../../utils/colors'
 
 export default () => {
 
-    // Using dispatch as userDispatch from UserContext
+    const [error, setError] = useState(false)
     const { dispatch } = useContext(UserContext)
-
-    // Declating navigation
-    const navigation = useNavigation();
+    const navigation = useNavigation()
 
     // Call verifyToken function when component mounts
     useEffect(() => {
         let isMounted = true
-        if (isMounted) verifyUser()
+        if(isMounted) getLocation()
         return () => { isMounted = false }
     }, [])
 
-    // Verify user
+    async function getLocation() {
+        try {
+            let {status} = await Permission.askAsync(Permission.LOCATION)
+            if(status !== 'granted') {
+                setError(true)
+            }else verifyUser()
+
+        } catch (error) {
+            setError(true)
+        }
+    }
+
+
     async function verifyUser() {
         try{
             // Gets token from AsyncStorage
-            const token = await AsyncStorage.getItem("token");
+            const token = await AsyncStorage.getItem("token")
     
             if(token) {
-                // Calls api with authorization token and set userData on res
+                
+                let location = await Location.getCurrentPositionAsync({})
+
                 const res = await api.post("/user/authenticate", {})
 
-                await AsyncStorage.setItem("token", res.data.token);
+                await AsyncStorage.setItem("token", res.data.token)
     
                 //set userData on dispatch to use in context
                 dispatch({
-                    type: "setDataUser",
+                    type: "preload",
                     data:{
                         id: res.data.user._id,
                         nome: res.data.user.name,
@@ -52,7 +66,9 @@ export default () => {
                         numPosts: res.data.user.numPosts,
                         numReviews: res.data.user.numReviews,
                         numPlaces: res.data.user.numPlaces,
-                        title: res.data.user.title
+                        title: res.data.user.title,
+                        latitude: location.coords.latitude,
+                        longitude: location.coords.longitude
                     }
                 })
     
@@ -61,6 +77,16 @@ export default () => {
     
             }else {
                 // If user not have token redirect to SignInPage
+                let location = await Location.getCurrentPositionAsync({})
+
+                dispatch({
+                    type: 'setUserLocation',
+                    coords: {
+                        latitude: location.coords.latitude,
+                        longitude: location.coords.longitude
+                    }
+                })
+
                 navigation.reset({ routes: [{name: "SignIn"}] })
             }
         }catch(error) {
@@ -72,7 +98,8 @@ export default () => {
     return (
         <SafeAreaView style={style.container} >
             <LogoSvg width={150} height={150} />
-            <ActivityIndicator size="large" color='#f2f2f2' />
+            {!error && <ActivityIndicator size="large" color='#f2f2f2' />}
+            {error && <Text style={style.text} >Precisamos dessa permissão para o aplicativo funcionar corretamente</Text>}
         </SafeAreaView>
     )
 }
@@ -83,5 +110,12 @@ const style = StyleSheet.create({
         alignItems: 'center', 
         justifyContent: "space-evenly", 
         backgroundColor: color.background,
-    }
+    },
+    text: {
+        color: '#f2f2f2',
+        fontFamily: 'Domine_400Regular',
+        fontSize: 16,
+        marginTop: '-40%',
+        textAlign: 'center'
+    },
 })

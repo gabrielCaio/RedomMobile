@@ -66,6 +66,22 @@ export const UserReducer = (state, action) => {
                     ...state,
                     nome: action.payload.nome
                 }
+            case "preload":
+                return {
+                    ...state,
+                    id: action.data.id,
+                    nome: action.data.nome,
+                    email: action.data.email,
+                    username: action.data.username,
+                    role: action.data.role,
+                    avatar: action.data.avatar,
+                    banner: action.data.banner,
+                    numPosts: action.data.numPosts,
+                    numReviews: action.data.numReviews,
+                    numPlaces: action.data.numPlaces,
+                    latitude: action.data.latitude,
+                    longitude: action.data.longitude
+                }
         default:
             return state;
     }
